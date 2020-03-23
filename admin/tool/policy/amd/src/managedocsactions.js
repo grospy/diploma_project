@@ -1,0 +1,141 @@
+//
+
+/**
+ * Adds support for confirmation via JS modal for some management actions at the Manage policies page.
+ *
+ * @module      tool_policy/managedocsactions
+ * @package     tool_policy
+ * @copyright   2018 David Mudrák <david@moodle.com>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+define([
+    'jquery',
+    'core/log',
+    'core/config',
+    'core/str',
+    'core/modal_factory',
+    'core/modal_events'
+], function($, Log, Config, Str, ModalFactory, ModalEvents) {
+
+    "use strict";
+
+    /**
+     * List of action selectors.
+     *
+     * @property {string} LINKS - Selector for all action links
+     * @property {string} MAKE_CURRENT
+     */
+    var ACTION = {
+        LINKS: '[data-action]',
+        MAKE_CURRENT: '[data-action="makecurrent"]',
+        INACTIVATE: '[data-action="inactivate"]',
+        DELETE: '[data-action="delete"]'
+    };
+
+    /**
+     * @constructor
+     * @param {Element} base - Management area wrapping element
+     */
+    function ManageDocsActions(base) {
+        this.base = base;
+
+        this.initEvents();
+    }
+
+    /**
+     * Register event listeners.
+     */
+    ManageDocsActions.prototype.initEvents = function() {
+        var self = this;
+
+        self.base.on('click', ACTION.LINKS, function(e) {
+            e.stopPropagation();
+
+            var link = $(e.currentTarget);
+            var promise;
+            var strings;
+
+            if (link.is(ACTION.MAKE_CURRENT)) {
+                promise = Str.get_strings([
+                    {key: 'activating', component: 'tool_policy'},
+                    {key: 'activateconfirm', component: 'tool_policy', param: {
+                        name: link.closest('[data-policy-name]').attr('data-policy-name'),
+                        revision: link.closest('[data-policy-revision]').attr('data-policy-revision')
+                    }},
+                    {key: 'activateconfirmyes', component: 'tool_policy'}
+                ]);
+
+            } else if (link.is(ACTION.INACTIVATE)) {
+                promise = Str.get_strings([
+                    {key: 'inactivating', component: 'tool_policy'},
+                    {key: 'inactivatingconfirm', component: 'tool_policy', param: {
+                        name: link.closest('[data-policy-name]').attr('data-policy-name'),
+                        revision: link.closest('[data-policy-revision]').attr('data-policy-revision')
+                    }},
+                    {key: 'inactivatingconfirmyes', component: 'tool_policy'}
+                ]);
+
+            } else if (link.is(ACTION.DELETE)) {
+                promise = Str.get_strings([
+                    {key: 'deleting', component: 'tool_policy'},
+                    {key: 'deleteconfirm', component: 'tool_policy', param: {
+                        name: link.closest('[data-policy-name]').attr('data-policy-name'),
+                        revision: link.closest('[data-policy-revision]').attr('data-policy-revision')
+                    }},
+                    {key: 'delete', component: 'core'}
+                ]);
+
+            } else {
+                Log.error('unknown action type detected', 'tool_policy/managedocsactions');
+                return;
+            }
+
+            e.preventDefault();
+
+            promise.then(function(strs) {
+                strings = strs;
+                return ModalFactory.create({
+                    title: strings[0],
+                    body: strings[1],
+                    type: ModalFactory.types.SAVE_CANCEL
+                });
+
+            }).then(function(modal) {
+                modal.setSaveButtonText(strings[2]);
+                modal.getRoot().on(ModalEvents.save, function() {
+                    window.location.href = link.attr('href') + '&sesskey=' + Config.sesskey + '&confirm=1';
+                });
+
+                modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.destroy();
+                });
+
+                modal.show();
+                return true;
+
+            }).catch(function(e) {
+                Log.error(e);
+                return false;
+            });
+        });
+    };
+
+    return {
+        /**
+         * Factory method returning instance of the ManageDocsActions
+         *
+         * @param {String} baseid - ID of the management area wrapping element
+         * @return {ManageDocsActions}
+         */
+        init: function(baseid) {
+            var base = $(document.getElementById(baseid));
+
+            if (base.length) {
+                return new ManageDocsActions(base);
+
+            } else {
+                throw new Error("managedocsactions: Invalid base element identifier");
+            }
+        }
+    };
+});

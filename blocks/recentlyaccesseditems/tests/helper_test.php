@@ -1,0 +1,58 @@
+<?php
+//
+
+/**
+ * Block recentlyaccesseditems helper tests.
+ *
+ * @package    block_recentlyaccesseditems
+ * @copyright  2019 University of Nottingham
+ * @author     Neill Magill <neill.magill@nottingham.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+use block_recentlyaccesseditems\helper;
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * Block Recently accessed helper class tests.
+ *
+ * @package    block_recentlyaccesseditems
+ * @copyright  2019 University of Nottingham
+ * @author     Neill Magill <neill.magill@nottingham.ac.uk>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class block_recentlyaccesseditems_helper_testcase extends advanced_testcase {
+    /**
+     * Tests that the get recent items method can handle getting records when courses have been deleted.
+     */
+    public function test_get_recent_items() {
+        $this->resetAfterTest();
+        $course = self::getDataGenerator()->create_course();
+        $coursetodelete = self::getDataGenerator()->create_course();
+        $user = self::getDataGenerator()->create_and_enrol($course, 'student');
+        self::getDataGenerator()->enrol_user($user->id, $coursetodelete->id, 'student');
+
+        // Add an activity to each course.
+        $forum = self::getDataGenerator()->create_module('forum', ['course' => $course]);
+        $glossary = self::getDataGenerator()->create_module('glossary', ['course' => $coursetodelete]);
+        self::setUser($user);
+
+        // Get the user to visit the activities.
+        $event1params = ['context' => context_module::instance($forum->cmid), 'objectid' => $forum->id];
+        $event1 = \mod_forum\event\course_module_viewed::create($event1params);
+        $event1->trigger();
+        $event2params = ['context' => context_module::instance($glossary->cmid), 'objectid' => $glossary->id];
+        $event2 = \mod_glossary\event\course_module_viewed::create($event2params);
+        $event2->trigger();
+        $recent1 = helper::get_recent_items();
+        self::assertCount(2, $recent1);
+        $recentlimited = helper::get_recent_items(1);
+        self::assertCount(1, $recentlimited);
+        delete_course($coursetodelete, false);
+
+        // There should be no errors if a course has been deleted.
+        $recent2 = helper::get_recent_items();
+        self::assertCount(1, $recent2);
+    }
+}

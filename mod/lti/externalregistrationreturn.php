@@ -1,0 +1,52 @@
+<?php
+//
+
+/**
+ * Handle the return from the Tool Provider after registering a tool proxy.
+ *
+ * @package mod_lti
+ * @copyright  2015 Ryan Wyllie
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once('../../config.php');
+require_once($CFG->dirroot.'/mod/lti/lib.php');
+require_once($CFG->dirroot.'/mod/lti/locallib.php');
+
+$status = optional_param('status', '', PARAM_TEXT);
+$msg = optional_param('lti_msg', '', PARAM_TEXT);
+$err = optional_param('lti_errormsg', '', PARAM_TEXT);
+$id = optional_param('id', 0, PARAM_INT);
+
+// No guest autologin.
+require_sesskey();
+require_login(0, false);
+
+$systemcontext = context_system::instance();
+require_capability('moodle/site:config', $systemcontext);
+
+$pageurl = new moodle_url('/mod/lti/externalregistrationreturn.php');
+$PAGE->set_context($systemcontext);
+$PAGE->set_url($pageurl);
+$PAGE->set_pagelayout('maintenance');
+$output = $PAGE->get_renderer('mod_lti');
+echo $output->header();
+
+// Check status and lti_errormsg.
+if ($status !== 'success' && empty($err)) {
+    // We have a failed status and an empty lti_errormsg. Check if we can use lti_msg.
+    if (!empty($msg)) {
+        // The lti_msg attribute is set, use this as the error message.
+        $err = $msg;
+    } else {
+        // Otherwise, use our generic error message.
+        $err = get_string('failedtocreatetooltype', 'mod_lti');
+    }
+}
+$params = array('message' => s($msg), 'error' => s($err), 'id' => $id, 'status' => s($status));
+
+$page = new \mod_lti\output\external_registration_return_page();
+echo $output->render($page);
+
+$PAGE->requires->js_call_amd('mod_lti/external_registration_return', 'init', $params);
+echo $output->footer();
