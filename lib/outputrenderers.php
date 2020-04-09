@@ -3998,6 +3998,7 @@ EOD;
      * @param string $text
      * @return string
      */
+    /*
     public function page_doc_link($text = null) {
         if ($text === null) {
             $text = get_string('moodledocslink');
@@ -4008,6 +4009,7 @@ EOD;
         }
         return $this->doc_link($path, $text);
     }
+    */
 
     /**
      * Returns the page heading menu.

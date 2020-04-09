@@ -1268,7 +1268,7 @@ class moodle_page {
     }
 
     /**
-     * Set a different path to use for the 'Moodle docs for this page' link.
+     * Set a different path to use for the '' link.
      *
      * By default, it uses the pagetype, which is normally the same as the
      * script name. So, for example, for mod/quiz/attempt.php, pagetype is
