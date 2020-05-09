@@ -846,7 +846,6 @@ $string['moodlepartners'] = 'Moodle Partners';
 $string['moodlepartners_help'] = '<p>Moodle Partners are services providers that are certified by Moodle HQ to provide high quality Moodle services for your organisation\'s online learning environment.</p>
 <a href="https://moodle.com/about-partners/">About our Partners</a><br />
 <a href="https://moodle.com/partners">Find a Partner</a>';
-$string['moodleservices'] = 'Moodle services';
 $string['moodleservices_help'] = 'Make sure you get the best from your Moodle learning environment by using these Moodle services:';
 $string['noreplyaddress'] = 'No-reply address';
 $string['noreplydomain'] = 'No-reply and domain';

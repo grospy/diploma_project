@@ -18,7 +18,7 @@ $ADMIN->add('root', new admin_externalpage('upgradesettings', new lang_string('u
 // Adding Moodle Services information page.
 $moodleservices = new admin_settingpage('moodleservices', new lang_string('moodleservices',
     'admin'));
-$ADMIN->add('root', $moodleservices);
+//$ADMIN->add('root', $moodleservices);
 
 if ($hassiteconfig) {
     $optionalsubsystems = new admin_settingpage('optionalsubsystems', new lang_string('advancedfeatures', 'admin'));
